@@ -1,0 +1,70 @@
+/* =========================================================================
+   FILE: assets/css/dashboard.css
+   MỤC ĐÍCH: CSS đặc thù cho trang Dashboard (index.html) - chỉ trang này
+             mới nhúng file CSS này.
+   ========================================================================= */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.dashboard-columns {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 900px) {
+    .dashboard-columns { grid-template-columns: 1fr; }
+}
+
+/* Biểu đồ doanh thu 7 ngày - vẽ bằng các cột div đơn giản (không cần thư viện) */
+.revenue-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    height: 180px;
+    padding-top: 10px;
+}
+.revenue-chart .bar-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+}
+.revenue-chart .bar {
+    width: 100%;
+    max-width: 40px;
+    background-color: var(--color-primary);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.3s ease;
+    min-height: 2px;
+}
+.revenue-chart .bar-value {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    margin-bottom: 4px;
+    white-space: nowrap;
+}
+.revenue-chart .bar-label {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin-top: 6px;
+}
+
+/* Danh sách sản phẩm bán chạy */
+.best-selling-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 14px;
+}
+.best-selling-list li:last-child { border-bottom: none; }
+.best-selling-list .product-name { font-weight: 600; }
+.best-selling-list .product-sold { color: var(--color-text-muted); font-size: 12px; }

@@ -1,0 +1,219 @@
+<!--
+    FILE: pages/inventory.html
+    -----------------------------------------------------------------------
+    1. File này dùng để làm gì?
+       Trang quản lý kho nguyên liệu: danh sách, tồn kho, nhập/xuất/điều
+       chỉnh, cảnh báo tồn kho thấp, lịch sử giao dịch kho.
+    2. File này giao tiếp với file nào?
+       ../assets/css/common.css, inventory.css, responsive.css
+       ../assets/js/api.js, common.js, inventory.js
+    3. File này gọi API nào? (thông qua inventory.js)
+       backend/api/inventory/list.php, create.php, update.php, delete.php,
+       transaction.php, history.php
+       backend/api/suppliers/list.php (đổ dropdown nhà cung cấp)
+    4. Dữ liệu đi theo hướng nào?
+       Trang load -> inventory.js gọi list.php -> render bảng (có cảnh báo)
+       Nhập/Xuất/Điều chỉnh -> gọi transaction.php -> SQL Server -> JSON
+       -> load lại bảng kho
+    -----------------------------------------------------------------------
+-->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kho - CoffeeManager</title>
+    <link rel="stylesheet" href="../assets/css/common.css">
+    <link rel="stylesheet" href="../assets/css/inventory.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar" id="app-sidebar">
+            <div class="sidebar-logo">
+                <span class="icon">☕</span>
+                <span class="logo-text">CoffeeManager</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="../index.html"><span class="menu-icon">📊</span><span>Dashboard</span></a></li>
+                <li><a href="pos.html"><span class="menu-icon">🛒</span><span>Bán hàng (POS)</span></a></li>
+                <li><a href="products.html"><span class="menu-icon">☕</span><span>Sản phẩm</span></a></li>
+                <li><a href="categories.html"><span class="menu-icon">🏷️</span><span>Danh mục</span></a></li>
+                <li><a href="tables.html"><span class="menu-icon">🍽️</span><span>Bàn</span></a></li>
+                <li><a href="orders.html"><span class="menu-icon">🧾</span><span>Đơn hàng</span></a></li>
+                <li><a href="customers.html"><span class="menu-icon">👥</span><span>Khách hàng</span></a></li>
+                <li><a href="employees.html"><span class="menu-icon">🧑‍💼</span><span>Nhân viên</span></a></li>
+                <li><a href="inventory.html" class="active"><span class="menu-icon">📦</span><span>Kho</span></a></li>
+                <li><a href="suppliers.html"><span class="menu-icon">🚚</span><span>Nhà cung cấp</span></a></li>
+                <li><a href="reports.html"><span class="menu-icon">📈</span><span>Báo cáo</span></a></li>
+                <li><a href="settings.html"><span class="menu-icon">⚙️</span><span>Cài đặt</span></a></li>
+            </ul>
+        </aside>
+
+        <div class="main-content">
+            <!-- ===== HEADER ===== -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="header-toggle-btn" id="sidebar-toggle-btn">☰</button>
+                    <h1 class="header-title">Quản lý kho</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-user">
+                        <div class="avatar" id="current-user-avatar">A</div>
+                        <div>
+                            <div class="user-name" id="current-user-name">...</div>
+                            <div class="user-role" id="current-user-role">...</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn">Đăng xuất</button>
+                </div>
+            </header>
+
+            <main class="page-body">
+
+                <div id="low-stock-alert" class="low-stock-alert" style="display:none;"></div>
+
+                <div class="toolbar">
+                    <div class="search-box">
+                        <span class="icon">🔍</span>
+                        <input type="text" id="search-input" class="form-control" placeholder="Tìm nguyên liệu...">
+                    </div>
+                    <div class="flex gap-8">
+                        <button class="btn btn-secondary" id="view-history-btn">📜 Lịch sử kho</button>
+                        <button class="btn btn-primary" id="add-ingredient-btn">+ Thêm nguyên liệu</button>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nguyên liệu</th>
+                                <th>Đơn vị</th>
+                                <th>Tồn kho</th>
+                                <th>Ngưỡng cảnh báo</th>
+                                <th>Nhà cung cấp</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-tbody">
+                            <tr><td colspan="6" class="table-empty">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: Thêm / Sửa nguyên liệu ===== -->
+    <div class="modal-overlay hidden" id="ingredient-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="ingredient-modal-title">Thêm nguyên liệu</h3>
+                <button class="modal-close-btn" onclick="closeModal('ingredient-modal')">✕</button>
+            </div>
+            <form id="ingredient-form">
+                <div class="modal-body">
+                    <input type="hidden" id="ingredient-id">
+
+                    <div class="form-group">
+                        <label class="form-label">Tên nguyên liệu *</label>
+                        <input type="text" id="ingredient-name" class="form-control" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Đơn vị tính *</label>
+                            <input type="text" id="ingredient-unit" class="form-control" placeholder="kg, lít, gói..." required>
+                        </div>
+                        <div class="form-group" id="ingredient-quantity-group">
+                            <label class="form-label">Tồn kho ban đầu</label>
+                            <input type="number" id="ingredient-quantity" class="form-control" min="0" step="0.1" value="0">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Ngưỡng cảnh báo tồn thấp</label>
+                            <input type="number" id="ingredient-threshold" class="form-control" min="0" step="0.1" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nhà cung cấp</label>
+                            <select id="ingredient-supplier" class="form-control">
+                                <option value="">-- Không chọn --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('ingredient-modal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary" id="ingredient-submit-btn">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: Nhập / Xuất / Điều chỉnh kho ===== -->
+    <div class="modal-overlay hidden" id="transaction-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="transaction-modal-title">Nhập kho</h3>
+                <button class="modal-close-btn" onclick="closeModal('transaction-modal')">✕</button>
+            </div>
+            <form id="transaction-form">
+                <div class="modal-body">
+                    <input type="hidden" id="transaction-ingredient-id">
+                    <input type="hidden" id="transaction-type">
+
+                    <p class="mb-16">Nguyên liệu: <strong id="transaction-ingredient-name"></strong> — Tồn hiện tại: <strong id="transaction-current-stock"></strong></p>
+
+                    <div class="form-group">
+                        <label class="form-label" id="transaction-quantity-label">Số lượng *</label>
+                        <input type="number" id="transaction-quantity" class="form-control" min="0" step="0.1" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea id="transaction-note" class="form-control" rows="2" placeholder="vd: Nhập từ nhà cung cấp X, kiểm kê cuối tháng..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('transaction-modal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary" id="transaction-submit-btn">Xác nhận</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: Lịch sử kho ===== -->
+    <div class="modal-overlay hidden" id="history-modal">
+        <div class="modal-box modal-lg">
+            <div class="modal-header">
+                <h3>Lịch sử giao dịch kho</h3>
+                <button class="modal-close-btn" onclick="closeModal('history-modal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Nguyên liệu</th><th>Loại</th><th>Số lượng</th><th>Ghi chú</th><th>Người thực hiện</th><th>Thời gian</th></tr>
+                        </thead>
+                        <tbody id="history-tbody">
+                            <tr><td colspan="6" class="table-empty">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thứ tự nhúng JS: api.js -> common.js -> inventory.js -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/common.js"></script>
+    <script src="../assets/js/inventory.js"></script>
+</body>
+</html>

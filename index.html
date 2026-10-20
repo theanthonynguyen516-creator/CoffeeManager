@@ -1,0 +1,152 @@
+<!--
+    FILE: index.html
+    -----------------------------------------------------------------------
+    1. File này dùng để làm gì?
+       Trang Dashboard/trang chính của hệ thống. CHỈ chứa thống kê tổng
+       quan. KHÔNG chứa POS, quản lý sản phẩm... (những trang đó nằm
+       riêng trong thư mục pages/).
+    2. File này giao tiếp với file nào?
+       assets/css/common.css, assets/css/dashboard.css, assets/css/responsive.css
+       assets/js/api.js, assets/js/common.js, assets/js/dashboard.js
+    3. File này gọi API nào?
+       backend/api/auth/me.php (qua common.js) và
+       backend/api/dashboard/statistics.php (qua dashboard.js)
+    4. Dữ liệu đi theo hướng nào?
+       Trang load xong -> dashboard.js gọi statistics.php -> SQL Server
+       -> JSON -> dashboard.js render ra các Card, bảng, biểu đồ
+    -----------------------------------------------------------------------
+-->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CoffeeManager</title>
+    <link rel="stylesheet" href="assets/css/common.css">
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <!-- ===== SIDEBAR (dùng chung cho mọi trang) ===== -->
+        <aside class="sidebar" id="app-sidebar">
+            <div class="sidebar-logo">
+                <span class="icon">☕</span>
+                <span class="logo-text">CoffeeManager</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html" class="active"><span class="menu-icon">📊</span><span>Dashboard</span></a></li>
+                <li><a href="pages/pos.html"><span class="menu-icon">🛒</span><span>Bán hàng (POS)</span></a></li>
+                <li><a href="pages/products.html"><span class="menu-icon">☕</span><span>Sản phẩm</span></a></li>
+                <li><a href="pages/categories.html"><span class="menu-icon">🏷️</span><span>Danh mục</span></a></li>
+                <li><a href="pages/tables.html"><span class="menu-icon">🍽️</span><span>Bàn</span></a></li>
+                <li><a href="pages/orders.html"><span class="menu-icon">🧾</span><span>Đơn hàng</span></a></li>
+                <li><a href="pages/customers.html"><span class="menu-icon">👥</span><span>Khách hàng</span></a></li>
+                <li><a href="pages/employees.html"><span class="menu-icon">🧑‍💼</span><span>Nhân viên</span></a></li>
+                <li><a href="pages/inventory.html"><span class="menu-icon">📦</span><span>Kho</span></a></li>
+                <li><a href="pages/suppliers.html"><span class="menu-icon">🚚</span><span>Nhà cung cấp</span></a></li>
+                <li><a href="pages/reports.html"><span class="menu-icon">📈</span><span>Báo cáo</span></a></li>
+                <li><a href="pages/settings.html"><span class="menu-icon">⚙️</span><span>Cài đặt</span></a></li>
+            </ul>
+        </aside>
+
+        <div class="main-content">
+            <!-- ===== HEADER (dùng chung cho mọi trang) ===== -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="header-toggle-btn" id="sidebar-toggle-btn">☰</button>
+                    <h1 class="header-title">Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-user">
+                        <div class="avatar" id="current-user-avatar">A</div>
+                        <div>
+                            <div class="user-name" id="current-user-name">...</div>
+                            <div class="user-role" id="current-user-role">...</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn">Đăng xuất</button>
+                </div>
+            </header>
+
+            <!-- ===== NỘI DUNG DASHBOARD ===== -->
+            <main class="page-body">
+
+                <!-- Các thẻ thống kê tổng quan -->
+                <div class="stats-grid mb-16">
+                    <div class="card">
+                        <div class="card-title">Doanh thu hôm nay</div>
+                        <div class="card-value" id="stat-today-revenue">--</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Doanh thu tháng</div>
+                        <div class="card-value" id="stat-month-revenue">--</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Số đơn hôm nay</div>
+                        <div class="card-value" id="stat-order-count">--</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Số khách hàng</div>
+                        <div class="card-value" id="stat-customer-count">--</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Số sản phẩm</div>
+                        <div class="card-value" id="stat-product-count">--</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Bàn đang dùng / trống</div>
+                        <div class="card-value" id="stat-tables">--</div>
+                    </div>
+                </div>
+
+                <!-- Biểu đồ doanh thu 7 ngày -->
+                <div class="card mb-16">
+                    <div class="card-title mb-16">Doanh thu 7 ngày gần nhất</div>
+                    <div id="revenue-chart" class="revenue-chart"></div>
+                </div>
+
+                <div class="dashboard-columns">
+                    <!-- Đơn hàng gần đây -->
+                    <div class="card">
+                        <div class="card-title mb-16">Đơn hàng gần đây</div>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Mã đơn</th>
+                                        <th>Bàn</th>
+                                        <th>Nhân viên</th>
+                                        <th>Tổng tiền</th>
+                                        <th>Trạng thái</th>
+                                        <th>Thời gian</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-orders-tbody">
+                                    <tr><td colspan="6" class="table-empty">Đang tải...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Sản phẩm bán chạy -->
+                    <div class="card">
+                        <div class="card-title mb-16">Sản phẩm bán chạy (30 ngày)</div>
+                        <ul id="best-selling-list" class="best-selling-list">
+                            <li class="table-empty">Đang tải...</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Thứ tự nhúng JS quan trọng: api.js -> common.js -> dashboard.js -->
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/common.js"></script>
+    <script src="assets/js/dashboard.js"></script>
+</body>
+</html>

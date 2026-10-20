@@ -1,0 +1,17 @@
+/* =========================================================================
+   FILE: assets/css/categories.css
+   MỤC ĐÍCH: CSS đặc thù cho trang Danh mục (pages/categories.html)
+   ========================================================================= */
+
+.category-name-cell { font-weight: 600; }
+
+.product-count-badge {
+    display: inline-block;
+    min-width: 22px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background-color: var(--color-bg);
+    color: var(--color-text-muted);
+    font-size: 12px;
+    text-align: center;
+}

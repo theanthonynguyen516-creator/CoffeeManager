@@ -1,0 +1,155 @@
+/* =========================================================================
+   FILE: assets/css/pos.css
+   MỤC ĐÍCH: CSS đặc thù cho trang POS (pages/pos.html)
+   LAYOUT: 2 cột - Sản phẩm bên trái (co giãn), Giỏ hàng bên phải (cố định)
+   ========================================================================= */
+
+.pos-body {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    flex: 1;
+    min-height: 0; /* cho phép các cột con tự scroll riêng */
+}
+
+/* ---------- Cột trái: sản phẩm ---------- */
+.pos-products-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.pos-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.pos-toolbar #pos-table-select { width: 220px; }
+
+.pos-category-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    flex-wrap: nowrap;
+}
+.category-tab {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background-color: #fff;
+    border: 1px solid var(--color-border);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--color-text-muted);
+}
+.category-tab.active {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+}
+
+.pos-products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
+    overflow-y: auto;
+    padding-bottom: 20px;
+}
+
+.pos-product-card {
+    background-color: #fff;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 12px;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    text-align: center;
+}
+.pos-product-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.pos-product-card .pos-product-thumb {
+    width: 100%; height: 90px; border-radius: var(--radius-sm);
+    background-color: var(--color-bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px; margin-bottom: 8px; overflow: hidden;
+}
+.pos-product-card .pos-product-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.pos-product-card .pos-product-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; min-height: 34px; }
+.pos-product-card .pos-product-price { font-size: 13px; color: var(--color-primary); font-weight: 700; }
+
+/* ---------- Cột phải: giỏ hàng ---------- */
+.pos-cart-panel {
+    width: 360px;
+    flex-shrink: 0;
+    background-color: #fff;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+}
+.pos-cart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.pos-cart-header h3 { font-size: 15px; }
+
+.pos-cart-items {
+    flex: 1;
+    overflow-y: auto;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.pos-cart-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--color-border);
+}
+.pos-cart-item:last-child { border-bottom: none; }
+.pos-cart-item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.pos-cart-item-name { font-size: 13px; font-weight: 600; flex: 1; }
+.pos-cart-item-remove { color: var(--color-danger); font-size: 16px; line-height: 1; }
+.pos-cart-item-price { font-size: 12px; color: var(--color-text-muted); }
+
+.pos-qty-control { display: flex; align-items: center; gap: 8px; }
+.pos-qty-control button {
+    width: 24px; height: 24px; border-radius: 4px;
+    background-color: var(--color-bg); font-weight: 700;
+}
+.pos-qty-control .qty-value { min-width: 20px; text-align: center; font-size: 13px; font-weight: 600; }
+
+.pos-cart-item-note {
+    width: 100%;
+    font-size: 12px;
+    padding: 6px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+}
+
+.pos-cart-footer .form-group { margin-bottom: 10px; }
+
+.pos-summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--color-text-muted);
+    padding: 4px 0;
+}
+.pos-total-row {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--color-text);
+    border-top: 1px dashed var(--color-border);
+    margin-top: 6px;
+    padding-top: 10px;
+}
+
+.pos-checkout-btn { width: 100%; margin-top: 12px; padding: 13px; font-size: 15px; }
+
+@media (max-width: 900px) {
+    .pos-body { flex-direction: column; }
+    .pos-cart-panel { width: 100%; }
+}

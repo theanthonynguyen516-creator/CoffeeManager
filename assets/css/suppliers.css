@@ -1,0 +1,17 @@
+/* =========================================================================
+   FILE: assets/css/suppliers.css
+   MỤC ĐÍCH: CSS đặc thù cho trang Nhà cung cấp (pages/suppliers.html)
+   ========================================================================= */
+
+.supplier-name-cell { font-weight: 600; }
+
+.ingredient-count-badge {
+    display: inline-block;
+    min-width: 22px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background-color: var(--color-bg);
+    color: var(--color-text-muted);
+    font-size: 12px;
+    text-align: center;
+}

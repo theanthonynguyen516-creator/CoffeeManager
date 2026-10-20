@@ -1,0 +1,16 @@
+/* =========================================================================
+   FILE: assets/css/settings.css
+   MỤC ĐÍCH: CSS đặc thù cho trang Cài đặt (pages/settings.html)
+   ========================================================================= */
+
+.settings-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    align-items: start;
+}
+
+.settings-section-title {
+    font-size: 15px;
+    margin-bottom: 16px;
+}

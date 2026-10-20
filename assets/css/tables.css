@@ -1,0 +1,65 @@
+/* =========================================================================
+   FILE: assets/css/tables.css
+   MỤC ĐÍCH: CSS đặc thù cho trang Bàn (pages/tables.html)
+   ========================================================================= */
+
+.table-legend {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    flex-wrap: wrap;
+}
+.legend-dot {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+.tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 16px;
+}
+
+.table-card {
+    background-color: #fff;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 16px;
+    border-top: 4px solid transparent;
+    text-align: center;
+    position: relative;
+}
+.table-card .table-icon { font-size: 28px; margin-bottom: 8px; }
+.table-card .table-name { font-weight: 700; font-size: 15px; }
+.table-card .table-capacity { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
+.table-card .table-order-total { font-size: 13px; font-weight: 600; margin-top: 6px; color: var(--color-primary); }
+.table-card .table-status-label { font-size: 11px; margin-top: 8px; font-weight: 600; }
+
+.table-card .table-card-actions {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+}
+.table-card .table-card-actions button {
+    font-size: 11px;
+    padding: 4px 8px;
+}
+
+/* Màu theo trạng thái (đồng bộ với các dot chú thích ở trên) */
+.status-empty { background-color: var(--color-success); }
+.status-in-use { background-color: var(--color-danger); }
+.status-reserved { background-color: var(--color-warning); }
+.status-cleaning { background-color: var(--color-info); }
+
+.table-card.card-status-EMPTY { border-top-color: var(--color-success); }
+.table-card.card-status-IN_USE { border-top-color: var(--color-danger); }
+.table-card.card-status-RESERVED { border-top-color: var(--color-warning); }
+.table-card.card-status-CLEANING { border-top-color: var(--color-info); }
+
+.table-card.card-status-EMPTY .table-status-label { color: var(--color-success); }
+.table-card.card-status-IN_USE .table-status-label { color: var(--color-danger); }
+.table-card.card-status-RESERVED .table-status-label { color: var(--color-warning); }
+.table-card.card-status-CLEANING .table-status-label { color: var(--color-info); }

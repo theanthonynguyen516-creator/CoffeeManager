@@ -1,0 +1,158 @@
+<!--
+    FILE: pages/reports.html
+    -----------------------------------------------------------------------
+    1. File này dùng để làm gì?
+       Trang báo cáo doanh thu: bộ lọc từ ngày - đến ngày, tổng quan,
+       biểu đồ doanh thu theo ngày, sản phẩm bán chạy, doanh thu theo
+       danh mục/nhân viên/phương thức thanh toán.
+    2. File này giao tiếp với file nào?
+       ../assets/css/common.css, reports.css, responsive.css
+       ../assets/js/api.js, common.js, reports.js
+    3. File này gọi API nào? (thông qua reports.js)
+       backend/api/reports/summary.php
+    4. Dữ liệu đi theo hướng nào?
+       Trang load / đổi bộ lọc -> reports.js gọi summary.php
+       -> SQL Server (nhiều GROUP BY) -> JSON -> reports.js vẽ toàn bộ báo cáo
+    -----------------------------------------------------------------------
+-->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo cáo - CoffeeManager</title>
+    <link rel="stylesheet" href="../assets/css/common.css">
+    <link rel="stylesheet" href="../assets/css/reports.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar" id="app-sidebar">
+            <div class="sidebar-logo">
+                <span class="icon">☕</span>
+                <span class="logo-text">CoffeeManager</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="../index.html"><span class="menu-icon">📊</span><span>Dashboard</span></a></li>
+                <li><a href="pos.html"><span class="menu-icon">🛒</span><span>Bán hàng (POS)</span></a></li>
+                <li><a href="products.html"><span class="menu-icon">☕</span><span>Sản phẩm</span></a></li>
+                <li><a href="categories.html"><span class="menu-icon">🏷️</span><span>Danh mục</span></a></li>
+                <li><a href="tables.html"><span class="menu-icon">🍽️</span><span>Bàn</span></a></li>
+                <li><a href="orders.html"><span class="menu-icon">🧾</span><span>Đơn hàng</span></a></li>
+                <li><a href="customers.html"><span class="menu-icon">👥</span><span>Khách hàng</span></a></li>
+                <li><a href="employees.html"><span class="menu-icon">🧑‍💼</span><span>Nhân viên</span></a></li>
+                <li><a href="inventory.html"><span class="menu-icon">📦</span><span>Kho</span></a></li>
+                <li><a href="suppliers.html"><span class="menu-icon">🚚</span><span>Nhà cung cấp</span></a></li>
+                <li><a href="reports.html" class="active"><span class="menu-icon">📈</span><span>Báo cáo</span></a></li>
+                <li><a href="settings.html"><span class="menu-icon">⚙️</span><span>Cài đặt</span></a></li>
+            </ul>
+        </aside>
+
+        <div class="main-content">
+            <!-- ===== HEADER ===== -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="header-toggle-btn" id="sidebar-toggle-btn">☰</button>
+                    <h1 class="header-title">Báo cáo doanh thu</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-user">
+                        <div class="avatar" id="current-user-avatar">A</div>
+                        <div>
+                            <div class="user-name" id="current-user-name">...</div>
+                            <div class="user-role" id="current-user-role">...</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn">Đăng xuất</button>
+                </div>
+            </header>
+
+            <main class="page-body">
+
+                <!-- Bộ lọc ngày -->
+                <div class="orders-filter-bar mb-16">
+                    <label class="text-muted">Từ ngày</label>
+                    <input type="date" id="from-date-input" class="form-control">
+                    <label class="text-muted">đến</label>
+                    <input type="date" id="to-date-input" class="form-control">
+                    <button class="btn btn-primary" id="apply-filter-btn">Xem báo cáo</button>
+                    <div class="flex gap-8" style="margin-left: auto;">
+                        <button class="btn btn-secondary btn-sm" data-quick-range="7">7 ngày qua</button>
+                        <button class="btn btn-secondary btn-sm" data-quick-range="30">30 ngày qua</button>
+                        <button class="btn btn-secondary btn-sm" data-quick-range="90">90 ngày qua</button>
+                    </div>
+                </div>
+
+                <!-- Thẻ tổng quan -->
+                <div class="stats-grid mb-16">
+                    <div class="card">
+                        <div class="card-title">Tổng doanh thu</div>
+                        <div class="card-value" id="report-total-revenue">--</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Tổng số đơn</div>
+                        <div class="card-value" id="report-total-orders">--</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Giá trị đơn trung bình</div>
+                        <div class="card-value" id="report-avg-order">--</div>
+                    </div>
+                </div>
+
+                <!-- Biểu đồ doanh thu theo ngày -->
+                <div class="card mb-16">
+                    <div class="card-title mb-16">Doanh thu theo ngày</div>
+                    <div id="report-revenue-chart" class="revenue-chart"></div>
+                </div>
+
+                <div class="reports-columns">
+                    <!-- Sản phẩm bán chạy -->
+                    <div class="card">
+                        <div class="card-title mb-16">Sản phẩm bán chạy (Top 10)</div>
+                        <table class="data-table">
+                            <thead><tr><th>Sản phẩm</th><th>SL bán</th><th>Doanh thu</th></tr></thead>
+                            <tbody id="top-products-tbody"><tr><td colspan="3" class="table-empty">Đang tải...</td></tr></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Doanh thu theo danh mục -->
+                    <div class="card">
+                        <div class="card-title mb-16">Doanh thu theo danh mục</div>
+                        <table class="data-table">
+                            <thead><tr><th>Danh mục</th><th>SL bán</th><th>Doanh thu</th></tr></thead>
+                            <tbody id="category-revenue-tbody"><tr><td colspan="3" class="table-empty">Đang tải...</td></tr></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Doanh thu theo nhân viên -->
+                    <div class="card">
+                        <div class="card-title mb-16">Doanh thu theo nhân viên</div>
+                        <table class="data-table">
+                            <thead><tr><th>Nhân viên</th><th>Số đơn</th><th>Doanh thu</th></tr></thead>
+                            <tbody id="employee-revenue-tbody"><tr><td colspan="3" class="table-empty">Đang tải...</td></tr></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Doanh thu theo phương thức thanh toán -->
+                    <div class="card">
+                        <div class="card-title mb-16">Doanh thu theo phương thức thanh toán</div>
+                        <table class="data-table">
+                            <thead><tr><th>Phương thức</th><th>Số giao dịch</th><th>Tổng tiền</th></tr></thead>
+                            <tbody id="payment-revenue-tbody"><tr><td colspan="3" class="table-empty">Đang tải...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Thứ tự nhúng JS: api.js -> common.js -> reports.js -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/common.js"></script>
+    <script src="../assets/js/reports.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+/* =========================================================================
+   FILE: assets/css/employees.css
+   MỤC ĐÍCH: CSS đặc thù cho trang Nhân viên (pages/employees.html)
+   ========================================================================= */
+
+.employee-name-cell { font-weight: 600; }
+
+.role-badge-Admin { background-color: #fbe6e6; color: var(--color-danger); }
+.role-badge-Manager { background-color: #fdf1e0; color: var(--color-warning); }
+.role-badge-Cashier { background-color: #e2f1fb; color: var(--color-info); }
+.role-badge-Staff { background-color: #ece8e3; color: var(--color-text-muted); }

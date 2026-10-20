@@ -1,0 +1,193 @@
+<!--
+    FILE: pages/tables.html
+    -----------------------------------------------------------------------
+    1. File này dùng để làm gì?
+       Hiển thị sơ đồ bàn dạng lưới, màu theo trạng thái. Cho phép thêm,
+       sửa, xóa, chuyển bàn, gộp bàn.
+    2. File này giao tiếp với file nào?
+       ../assets/css/common.css, tables.css, responsive.css
+       ../assets/js/api.js, common.js, tables.js
+    3. File này gọi API nào? (thông qua tables.js)
+       backend/api/tables/list.php, create.php, update.php, delete.php,
+       transfer.php, merge.php
+    4. Dữ liệu đi theo hướng nào?
+       Trang load -> tables.js gọi list.php -> render lưới thẻ bàn
+       Thêm/sửa/xóa/chuyển/gộp -> gọi API tương ứng -> SQL Server -> JSON
+       -> tables.js load lại sơ đồ
+    -----------------------------------------------------------------------
+-->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bàn - CoffeeManager</title>
+    <link rel="stylesheet" href="../assets/css/common.css">
+    <link rel="stylesheet" href="../assets/css/tables.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar" id="app-sidebar">
+            <div class="sidebar-logo">
+                <span class="icon">☕</span>
+                <span class="logo-text">CoffeeManager</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="../index.html"><span class="menu-icon">📊</span><span>Dashboard</span></a></li>
+                <li><a href="pos.html"><span class="menu-icon">🛒</span><span>Bán hàng (POS)</span></a></li>
+                <li><a href="products.html"><span class="menu-icon">☕</span><span>Sản phẩm</span></a></li>
+                <li><a href="categories.html"><span class="menu-icon">🏷️</span><span>Danh mục</span></a></li>
+                <li><a href="tables.html" class="active"><span class="menu-icon">🍽️</span><span>Bàn</span></a></li>
+                <li><a href="orders.html"><span class="menu-icon">🧾</span><span>Đơn hàng</span></a></li>
+                <li><a href="customers.html"><span class="menu-icon">👥</span><span>Khách hàng</span></a></li>
+                <li><a href="employees.html"><span class="menu-icon">🧑‍💼</span><span>Nhân viên</span></a></li>
+                <li><a href="inventory.html"><span class="menu-icon">📦</span><span>Kho</span></a></li>
+                <li><a href="suppliers.html"><span class="menu-icon">🚚</span><span>Nhà cung cấp</span></a></li>
+                <li><a href="reports.html"><span class="menu-icon">📈</span><span>Báo cáo</span></a></li>
+                <li><a href="settings.html"><span class="menu-icon">⚙️</span><span>Cài đặt</span></a></li>
+            </ul>
+        </aside>
+
+        <div class="main-content">
+            <!-- ===== HEADER ===== -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="header-toggle-btn" id="sidebar-toggle-btn">☰</button>
+                    <h1 class="header-title">Sơ đồ bàn</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-user">
+                        <div class="avatar" id="current-user-avatar">A</div>
+                        <div>
+                            <div class="user-name" id="current-user-name">...</div>
+                            <div class="user-role" id="current-user-role">...</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn">Đăng xuất</button>
+                </div>
+            </header>
+
+            <main class="page-body">
+
+                <div class="toolbar">
+                    <!-- Chú thích màu trạng thái -->
+                    <div class="flex gap-12 table-legend">
+                        <span><span class="legend-dot status-empty"></span> Trống</span>
+                        <span><span class="legend-dot status-in-use"></span> Đang sử dụng</span>
+                        <span><span class="legend-dot status-reserved"></span> Đã đặt</span>
+                        <span><span class="legend-dot status-cleaning"></span> Đang dọn</span>
+                    </div>
+                    <div class="flex gap-8">
+                        <button class="btn btn-secondary" id="merge-table-btn">🔀 Gộp bàn</button>
+                        <button class="btn btn-secondary" id="transfer-table-btn">↔ Chuyển bàn</button>
+                        <button class="btn btn-primary" id="add-table-btn">+ Thêm bàn</button>
+                    </div>
+                </div>
+
+                <div id="tables-grid" class="tables-grid">
+                    <p class="table-empty">Đang tải...</p>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: Thêm / Sửa bàn ===== -->
+    <div class="modal-overlay hidden" id="table-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="table-modal-title">Thêm bàn</h3>
+                <button class="modal-close-btn" onclick="closeModal('table-modal')">✕</button>
+            </div>
+            <form id="table-form">
+                <div class="modal-body">
+                    <input type="hidden" id="table-id">
+                    <div class="form-group">
+                        <label class="form-label">Tên bàn *</label>
+                        <input type="text" id="table-name" class="form-control" placeholder="vd: Bàn 06" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sức chứa (số người)</label>
+                        <input type="number" id="table-capacity" class="form-control" min="1" value="4">
+                    </div>
+                    <div class="form-group" id="table-status-group" style="display:none;">
+                        <label class="form-label">Trạng thái</label>
+                        <select id="table-status" class="form-control">
+                            <option value="EMPTY">Trống</option>
+                            <option value="IN_USE">Đang sử dụng</option>
+                            <option value="RESERVED">Đã đặt</option>
+                            <option value="CLEANING">Đang dọn</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('table-modal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary" id="table-submit-btn">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: Chuyển bàn ===== -->
+    <div class="modal-overlay hidden" id="transfer-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Chuyển bàn</h3>
+                <button class="modal-close-btn" onclick="closeModal('transfer-modal')">✕</button>
+            </div>
+            <form id="transfer-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Từ bàn (đang có khách) *</label>
+                        <select id="transfer-from" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Đến bàn (đang trống) *</label>
+                        <select id="transfer-to" class="form-control" required></select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('transfer-modal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Chuyển bàn</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: Gộp bàn ===== -->
+    <div class="modal-overlay hidden" id="merge-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Gộp bàn</h3>
+                <button class="modal-close-btn" onclick="closeModal('merge-modal')">✕</button>
+            </div>
+            <form id="merge-form">
+                <div class="modal-body">
+                    <p class="text-muted mb-16">Toàn bộ món của "bàn nguồn" sẽ được gộp vào "bàn đích". Bàn nguồn sẽ chuyển về trạng thái Trống.</p>
+                    <div class="form-group">
+                        <label class="form-label">Bàn nguồn (sẽ gộp đi) *</label>
+                        <select id="merge-source" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Bàn đích (giữ lại) *</label>
+                        <select id="merge-target" class="form-control" required></select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('merge-modal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Gộp bàn</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Thứ tự nhúng JS: api.js -> common.js -> tables.js -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/common.js"></script>
+    <script src="../assets/js/tables.js"></script>
+</body>
+</html>

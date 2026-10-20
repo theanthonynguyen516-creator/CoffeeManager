@@ -1,0 +1,18 @@
+/* =========================================================================
+   FILE: assets/css/customers.css
+   MỤC ĐÍCH: CSS đặc thù cho trang Khách hàng (pages/customers.html)
+   ========================================================================= */
+
+.customer-name-cell { font-weight: 600; }
+
+.loyalty-points-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background-color: #fdf1e0;
+    color: var(--color-warning);
+    font-size: 12px;
+    font-weight: 700;
+}

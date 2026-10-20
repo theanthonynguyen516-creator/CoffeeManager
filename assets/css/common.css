@@ -1,0 +1,308 @@
+/* =========================================================================
+   FILE: assets/css/common.css
+   MỤC ĐÍCH: CSS dùng chung cho TOÀN BỘ website (mọi trang đều nhúng file này)
+   NỘI DUNG: CSS Reset, biến màu, Header, Sidebar, Button, Form, Modal,
+             Table, Card, Toast, Loading, Badge, Pagination
+   LƯU Ý: Chỉ để CSS DÙNG CHUNG ở đây. CSS riêng của từng trang (vd: layout
+          đặc biệt của POS) phải để trong file css riêng (pos.css...).
+   ========================================================================= */
+
+/* ---------- 1. Biến màu & font dùng chung (CSS Variables) ---------- */
+:root {
+    --color-primary: #6f4e37;      /* màu nâu cà phê - màu chủ đạo */
+    --color-primary-dark: #503726;
+    --color-primary-light: #a9744f;
+    --color-secondary: #d9a441;    /* màu vàng caramel - màu nhấn */
+    --color-success: #2e7d32;
+    --color-danger: #c62828;
+    --color-warning: #ed6c02;
+    --color-info: #0277bd;
+
+    --color-bg: #f5f1ec;
+    --color-surface: #ffffff;
+    --color-border: #e0d7cd;
+    --color-text: #2b2118;
+    --color-text-muted: #6b5f54;
+
+    --sidebar-width: 250px;
+    --sidebar-width-collapsed: 70px;
+    --header-height: 64px;
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+
+    --font-main: "Segoe UI", "Roboto", Arial, sans-serif;
+}
+
+/* ---------- 2. CSS Reset ---------- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    height: 100%;
+    font-family: var(--font-main);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+a { text-decoration: none; color: inherit; }
+ul { list-style: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, select, textarea { font-family: inherit; font-size: inherit; }
+img { max-width: 100%; display: block; }
+
+/* ---------- 3. Layout tổng: Sidebar + Header + Nội dung ---------- */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ---------- 4. Sidebar ---------- */
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--color-primary-dark);
+    color: #fff;
+    flex-shrink: 0;
+    transition: width 0.2s ease;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+.sidebar.collapsed { width: var(--sidebar-width-collapsed); }
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 20px;
+    font-size: 18px;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    white-space: nowrap;
+    overflow: hidden;
+}
+.sidebar-logo span.icon { font-size: 22px; }
+
+.sidebar-menu { padding: 10px 0; }
+.sidebar-menu li a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: rgba(255,255,255,0.85);
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    border-left: 3px solid transparent;
+    transition: background-color 0.15s;
+}
+.sidebar-menu li a:hover { background-color: rgba(255,255,255,0.08); }
+.sidebar-menu li a.active {
+    background-color: rgba(255,255,255,0.12);
+    border-left-color: var(--color-secondary);
+    color: #fff;
+    font-weight: 600;
+}
+.sidebar-menu li a .menu-icon { width: 20px; text-align: center; }
+
+/* ---------- 5. Header ---------- */
+.main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+.header {
+    height: var(--header-height);
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.header-left { display: flex; align-items: center; gap: 16px; }
+.header-toggle-btn {
+    font-size: 20px;
+    color: var(--color-text-muted);
+    padding: 6px;
+    border-radius: var(--radius-sm);
+}
+.header-toggle-btn:hover { background-color: var(--color-bg); }
+.header-title { font-size: 18px; font-weight: 600; }
+
+.header-right { display: flex; align-items: center; gap: 18px; }
+.header-user { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.header-user .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background-color: var(--color-primary);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+}
+.header-user .user-name { font-size: 14px; font-weight: 600; }
+.header-user .user-role { font-size: 12px; color: var(--color-text-muted); }
+
+.page-body { padding: 24px; flex: 1; }
+
+/* ---------- 6. Button ---------- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    transition: opacity 0.15s, transform 0.05s;
+    white-space: nowrap;
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary { background-color: var(--color-primary); color: #fff; }
+.btn-primary:hover { background-color: var(--color-primary-dark); }
+.btn-secondary { background-color: #fff; color: var(--color-text); border: 1px solid var(--color-border); }
+.btn-secondary:hover { background-color: var(--color-bg); }
+.btn-success { background-color: var(--color-success); color: #fff; }
+.btn-danger { background-color: var(--color-danger); color: #fff; }
+.btn-warning { background-color: var(--color-warning); color: #fff; }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+.btn-icon { padding: 8px; border-radius: var(--radius-sm); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---------- 7. Form ---------- */
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: var(--color-text-muted); }
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background-color: #fff;
+    font-size: 14px;
+}
+.form-control:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(111,78,55,0.12); }
+.form-row { display: flex; gap: 16px; }
+.form-row .form-group { flex: 1; }
+.form-error { color: var(--color-danger); font-size: 12px; margin-top: 4px; }
+.form-control.has-error { border-color: var(--color-danger); }
+
+/* ---------- 8. Modal ---------- */
+.modal-overlay {
+    position: fixed; inset: 0;
+    background-color: rgba(0,0,0,0.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+}
+.modal-overlay.hidden { display: none; }
+.modal-box {
+    background-color: #fff;
+    border-radius: var(--radius-md);
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-md);
+}
+.modal-box.modal-lg { max-width: 800px; }
+.modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 20px; border-bottom: 1px solid var(--color-border);
+}
+.modal-header h3 { font-size: 16px; font-weight: 700; }
+.modal-close-btn { font-size: 20px; color: var(--color-text-muted); }
+.modal-body { padding: 20px; overflow-y: auto; }
+.modal-footer {
+    padding: 16px 20px; border-top: 1px solid var(--color-border);
+    display: flex; justify-content: flex-end; gap: 10px;
+}
+
+/* ---------- 9. Table ---------- */
+.table-wrapper { overflow-x: auto; background: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+.data-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+.data-table th {
+    text-align: left; padding: 12px 16px; background-color: var(--color-bg);
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em;
+    color: var(--color-text-muted); border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+}
+.data-table td { padding: 12px 16px; border-bottom: 1px solid var(--color-border); font-size: 14px; }
+.data-table tbody tr:hover { background-color: #faf7f3; }
+.data-table .actions-cell { display: flex; gap: 8px; }
+.table-empty { text-align: center; padding: 40px; color: var(--color-text-muted); }
+
+/* ---------- 10. Card ---------- */
+.card {
+    background-color: #fff;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 18px;
+}
+.card-title { font-size: 14px; color: var(--color-text-muted); margin-bottom: 6px; }
+.card-value { font-size: 26px; font-weight: 700; }
+
+/* ---------- 11. Toast (thông báo nổi) ---------- */
+#toast-container {
+    position: fixed; top: 20px; right: 20px; z-index: 2000;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.toast {
+    min-width: 260px; max-width: 360px;
+    padding: 14px 16px; border-radius: var(--radius-sm);
+    color: #fff; font-size: 14px; box-shadow: var(--shadow-md);
+    animation: toast-in 0.2s ease;
+}
+.toast-success { background-color: var(--color-success); }
+.toast-error { background-color: var(--color-danger); }
+.toast-warning { background-color: var(--color-warning); }
+.toast-info { background-color: var(--color-info); }
+@keyframes toast-in { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ---------- 12. Loading ---------- */
+.loading-spinner {
+    display: inline-block; width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
+    border-radius: 50%; animation: spin 0.6s linear infinite;
+}
+.loading-spinner.dark { border-color: rgba(111,78,55,0.25); border-top-color: var(--color-primary); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay {
+    display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--color-text-muted);
+}
+
+/* ---------- 13. Badge ---------- */
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.badge-success { background-color: #e5f4e5; color: var(--color-success); }
+.badge-danger { background-color: #fbe6e6; color: var(--color-danger); }
+.badge-warning { background-color: #fdf1e0; color: var(--color-warning); }
+.badge-info { background-color: #e2f1fb; color: var(--color-info); }
+.badge-muted { background-color: #ece8e3; color: var(--color-text-muted); }
+
+/* ---------- 14. Pagination ---------- */
+.pagination { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 16px; }
+.pagination button {
+    min-width: 32px; height: 32px; border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border); background: #fff; font-size: 13px;
+}
+.pagination button.active { background-color: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+.pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---------- 15. Tiện ích chung ---------- */
+.text-muted { color: var(--color-text-muted); }
+.text-danger { color: var(--color-danger); }
+.text-success { color: var(--color-success); }
+.flex { display: flex; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.mb-16 { margin-bottom: 16px; }
+.toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 12px; flex-wrap: wrap; }
+.search-box { position: relative; }
+.search-box input { padding-left: 36px; min-width: 240px; }
+.search-box .icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); }

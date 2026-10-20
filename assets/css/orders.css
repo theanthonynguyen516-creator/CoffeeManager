@@ -1,0 +1,55 @@
+/* =========================================================================
+   FILE: assets/css/orders.css
+   MỤC ĐÍCH: CSS đặc thù cho trang Đơn hàng (pages/orders.html)
+   ========================================================================= */
+
+.orders-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.orders-filter-bar .form-control { width: auto; }
+
+/* ---------- Chi tiết đơn hàng trong modal ---------- */
+.order-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 20px;
+    margin-bottom: 18px;
+    font-size: 14px;
+}
+.order-info-grid .label { color: var(--color-text-muted); font-size: 12px; }
+.order-info-grid .value { font-weight: 600; }
+
+.order-items-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+.order-items-table th, .order-items-table td {
+    padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--color-border); font-size: 13px;
+}
+.order-items-table th { color: var(--color-text-muted); font-size: 11px; text-transform: uppercase; }
+.order-items-table .text-right { text-align: right; }
+
+.order-totals { margin-left: auto; width: 260px; }
+.order-totals .pos-summary-row { font-size: 13px; }
+
+/* ---------- Vùng in hóa đơn ----------
+   Mặc định ẩn hoàn toàn khỏi giao diện, chỉ hiển thị khi gọi window.print()
+   nhờ @media print bên dưới. Cách làm này giúp hóa đơn in ra gọn gàng,
+   không lẫn Sidebar/Header/Modal của trang quản trị. */
+.invoice-print-area { display: none; }
+
+@media print {
+    body * { visibility: hidden; }
+    .invoice-print-area, .invoice-print-area * { visibility: visible; }
+    .invoice-print-area {
+        display: block;
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%;
+        padding: 20px;
+        font-family: "Courier New", monospace;
+    }
+    .invoice-print-area h2 { text-align: center; margin-bottom: 6px; }
+    .invoice-print-area .invoice-line { display: flex; justify-content: space-between; font-size: 13px; margin: 4px 0; }
+    .invoice-print-area hr { border: none; border-top: 1px dashed #000; margin: 10px 0; }
+}

@@ -1,0 +1,180 @@
+<!--
+    FILE: pages/products.html
+    -----------------------------------------------------------------------
+    1. File này dùng để làm gì?
+       Trang quản lý sản phẩm: danh sách, tìm kiếm, lọc danh mục, thêm,
+       sửa, xóa, đổi trạng thái sản phẩm.
+    2. File này giao tiếp với file nào?
+       ../assets/css/common.css, ../assets/css/products.css, responsive.css
+       ../assets/js/api.js, common.js, products.js
+    3. File này gọi API nào? (thông qua products.js)
+       backend/api/products/list.php, create.php, update.php, delete.php
+       backend/api/categories/list.php (đổ dropdown danh mục)
+    4. Dữ liệu đi theo hướng nào?
+       Trang load -> products.js gọi list.php -> render bảng
+       Người dùng thêm/sửa/xóa -> products.js gọi create/update/delete.php
+       -> SQL Server -> JSON -> products.js load lại bảng
+    -----------------------------------------------------------------------
+-->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sản phẩm - CoffeeManager</title>
+    <link rel="stylesheet" href="../assets/css/common.css">
+    <link rel="stylesheet" href="../assets/css/products.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar" id="app-sidebar">
+            <div class="sidebar-logo">
+                <span class="icon">☕</span>
+                <span class="logo-text">CoffeeManager</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="../index.html"><span class="menu-icon">📊</span><span>Dashboard</span></a></li>
+                <li><a href="pos.html"><span class="menu-icon">🛒</span><span>Bán hàng (POS)</span></a></li>
+                <li><a href="products.html" class="active"><span class="menu-icon">☕</span><span>Sản phẩm</span></a></li>
+                <li><a href="categories.html"><span class="menu-icon">🏷️</span><span>Danh mục</span></a></li>
+                <li><a href="tables.html"><span class="menu-icon">🍽️</span><span>Bàn</span></a></li>
+                <li><a href="orders.html"><span class="menu-icon">🧾</span><span>Đơn hàng</span></a></li>
+                <li><a href="customers.html"><span class="menu-icon">👥</span><span>Khách hàng</span></a></li>
+                <li><a href="employees.html"><span class="menu-icon">🧑‍💼</span><span>Nhân viên</span></a></li>
+                <li><a href="inventory.html"><span class="menu-icon">📦</span><span>Kho</span></a></li>
+                <li><a href="suppliers.html"><span class="menu-icon">🚚</span><span>Nhà cung cấp</span></a></li>
+                <li><a href="reports.html"><span class="menu-icon">📈</span><span>Báo cáo</span></a></li>
+                <li><a href="settings.html"><span class="menu-icon">⚙️</span><span>Cài đặt</span></a></li>
+            </ul>
+        </aside>
+
+        <div class="main-content">
+            <!-- ===== HEADER ===== -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="header-toggle-btn" id="sidebar-toggle-btn">☰</button>
+                    <h1 class="header-title">Quản lý sản phẩm</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-user">
+                        <div class="avatar" id="current-user-avatar">A</div>
+                        <div>
+                            <div class="user-name" id="current-user-name">...</div>
+                            <div class="user-role" id="current-user-role">...</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn">Đăng xuất</button>
+                </div>
+            </header>
+
+            <main class="page-body">
+
+                <!-- Thanh công cụ: tìm kiếm + lọc + nút thêm -->
+                <div class="toolbar">
+                    <div class="flex gap-12" style="flex-wrap: wrap;">
+                        <div class="search-box">
+                            <span class="icon">🔍</span>
+                            <input type="text" id="search-input" class="form-control" placeholder="Tìm sản phẩm theo tên...">
+                        </div>
+                        <select id="category-filter" class="form-control" style="width: 200px;">
+                            <option value="">Tất cả danh mục</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="add-product-btn">+ Thêm sản phẩm</button>
+                </div>
+
+                <!-- Bảng danh sách sản phẩm -->
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Hình ảnh</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Danh mục</th>
+                                <th>Giá bán</th>
+                                <th>Giá vốn</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-tbody">
+                            <tr><td colspan="7" class="table-empty">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="pagination-container"></div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: Thêm / Sửa sản phẩm ===== -->
+    <div class="modal-overlay hidden" id="product-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="product-modal-title">Thêm sản phẩm</h3>
+                <button class="modal-close-btn" onclick="closeModal('product-modal')">✕</button>
+            </div>
+            <form id="product-form">
+                <div class="modal-body">
+                    <input type="hidden" id="product-id">
+
+                    <div class="form-group">
+                        <label class="form-label">Tên sản phẩm *</label>
+                        <input type="text" id="product-name" class="form-control" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Danh mục *</label>
+                            <select id="product-category" class="form-control" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Trạng thái</label>
+                            <select id="product-status" class="form-control">
+                                <option value="1">Đang bán</option>
+                                <option value="0">Ngừng bán</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Giá bán (₫) *</label>
+                            <input type="number" id="product-sell-price" class="form-control" min="0" step="1000" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Giá vốn (₫)</label>
+                            <input type="number" id="product-cost-price" class="form-control" min="0" step="1000">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Link hình ảnh</label>
+                        <input type="text" id="product-image" class="form-control" placeholder="https://...">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Mô tả</label>
+                        <textarea id="product-description" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('product-modal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary" id="product-submit-btn">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Thứ tự nhúng JS: api.js -> common.js -> products.js -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/common.js"></script>
+    <script src="../assets/js/products.js"></script>
+</body>
+</html>

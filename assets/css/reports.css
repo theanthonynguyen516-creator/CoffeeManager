@@ -1,0 +1,71 @@
+/* =========================================================================
+   FILE: assets/css/reports.css
+   MỤC ĐÍCH: CSS đặc thù cho trang Báo cáo (pages/reports.html)
+   ========================================================================= */
+
+.reports-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* Lưới thẻ tổng quan (giống dashboard, tách riêng vì mỗi trang chỉ nhúng
+   CSS riêng của mình + common.css) */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+@media (max-width: 900px) {
+    .reports-columns { grid-template-columns: 1fr; }
+}
+
+.reports-columns .card { overflow-x: auto; }
+
+[data-quick-range].active {
+    background-color: var(--color-primary);
+    color: #fff;
+    border-color: var(--color-primary);
+}
+
+/* Biểu đồ doanh thu theo ngày - vẽ bằng div thuần (giống dashboard, nhưng
+   tách riêng ở đây vì mỗi trang chỉ nhúng CSS riêng của mình + common.css,
+   không nhúng chéo CSS của trang khác) */
+.revenue-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    height: 200px;
+    padding-top: 10px;
+    overflow-x: auto;
+}
+.revenue-chart .bar-column {
+    flex: 1;
+    min-width: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+}
+.revenue-chart .bar {
+    width: 100%;
+    max-width: 36px;
+    background-color: var(--color-primary);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.3s ease;
+    min-height: 2px;
+}
+.revenue-chart .bar-value {
+    font-size: 10px;
+    color: var(--color-text-muted);
+    margin-bottom: 4px;
+    white-space: nowrap;
+}
+.revenue-chart .bar-label {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    margin-top: 6px;
+    white-space: nowrap;
+}

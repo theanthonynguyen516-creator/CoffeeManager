@@ -1,0 +1,194 @@
+<!--
+    FILE: pages/pos.html
+    -----------------------------------------------------------------------
+    1. File này dùng để làm gì?
+       Trang bán hàng (Point of Sale): chọn bàn, chọn sản phẩm theo danh
+       mục, thêm vào giỏ hàng, chỉnh số lượng/ghi chú, áp giảm giá, thanh
+       toán. Đây là trang được nhân viên/thu ngân dùng nhiều nhất.
+    2. File này giao tiếp với file nào?
+       ../assets/css/common.css, pos.css, responsive.css
+       ../assets/js/api.js, common.js, pos.js
+    3. File này gọi API nào? (thông qua pos.js)
+       backend/api/tables/list.php, categories/list.php, products/list.php,
+       backend/api/orders/create.php (thanh toán)
+    4. Dữ liệu đi theo hướng nào?
+       Trang load -> pos.js gọi tables/categories/products list.php -> render
+       Người dùng thêm món -> giỏ hàng lưu tạm trong JS (biến cart)
+       Bấm "Thanh toán" -> pos.js gọi orders/create.php -> SQL Server
+       -> JSON hóa đơn -> pos.js hiển thị kết quả & xóa giỏ hàng
+    -----------------------------------------------------------------------
+-->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bán hàng (POS) - CoffeeManager</title>
+    <link rel="stylesheet" href="../assets/css/common.css">
+    <link rel="stylesheet" href="../assets/css/pos.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar" id="app-sidebar">
+            <div class="sidebar-logo">
+                <span class="icon">☕</span>
+                <span class="logo-text">CoffeeManager</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="../index.html"><span class="menu-icon">📊</span><span>Dashboard</span></a></li>
+                <li><a href="pos.html" class="active"><span class="menu-icon">🛒</span><span>Bán hàng (POS)</span></a></li>
+                <li><a href="products.html"><span class="menu-icon">☕</span><span>Sản phẩm</span></a></li>
+                <li><a href="categories.html"><span class="menu-icon">🏷️</span><span>Danh mục</span></a></li>
+                <li><a href="tables.html"><span class="menu-icon">🍽️</span><span>Bàn</span></a></li>
+                <li><a href="orders.html"><span class="menu-icon">🧾</span><span>Đơn hàng</span></a></li>
+                <li><a href="customers.html"><span class="menu-icon">👥</span><span>Khách hàng</span></a></li>
+                <li><a href="employees.html"><span class="menu-icon">🧑‍💼</span><span>Nhân viên</span></a></li>
+                <li><a href="inventory.html"><span class="menu-icon">📦</span><span>Kho</span></a></li>
+                <li><a href="suppliers.html"><span class="menu-icon">🚚</span><span>Nhà cung cấp</span></a></li>
+                <li><a href="reports.html"><span class="menu-icon">📈</span><span>Báo cáo</span></a></li>
+                <li><a href="settings.html"><span class="menu-icon">⚙️</span><span>Cài đặt</span></a></li>
+            </ul>
+        </aside>
+
+        <div class="main-content">
+            <!-- ===== HEADER ===== -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="header-toggle-btn" id="sidebar-toggle-btn">☰</button>
+                    <h1 class="header-title">Bán hàng</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-user">
+                        <div class="avatar" id="current-user-avatar">A</div>
+                        <div>
+                            <div class="user-name" id="current-user-name">...</div>
+                            <div class="user-role" id="current-user-role">...</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn">Đăng xuất</button>
+                </div>
+            </header>
+
+            <!-- ===== NỘI DUNG POS: 2 CỘT ===== -->
+            <main class="pos-body">
+
+                <!-- CỘT TRÁI: chọn bàn + sản phẩm -->
+                <section class="pos-products-panel">
+
+                    <div class="pos-toolbar">
+                        <select id="pos-table-select" class="form-control">
+                            <option value="">Mang về (không chọn bàn)</option>
+                        </select>
+                        <div class="search-box" style="flex: 1;">
+                            <span class="icon">🔍</span>
+                            <input type="text" id="pos-search-input" class="form-control" placeholder="Tìm sản phẩm...">
+                        </div>
+                    </div>
+
+                    <div id="pos-category-tabs" class="pos-category-tabs">
+                        <button class="category-tab active" data-category-id="">Tất cả</button>
+                    </div>
+
+                    <div id="pos-products-grid" class="pos-products-grid">
+                        <p class="table-empty">Đang tải sản phẩm...</p>
+                    </div>
+                </section>
+
+                <!-- CỘT PHẢI: giỏ hàng -->
+                <aside class="pos-cart-panel">
+                    <div class="pos-cart-header">
+                        <h3>🛒 Giỏ hàng</h3>
+                        <button class="btn btn-secondary btn-sm" id="clear-cart-btn">Xóa hết</button>
+                    </div>
+
+                    <div id="pos-cart-items" class="pos-cart-items">
+                        <p class="table-empty">Chưa có món nào</p>
+                    </div>
+
+                    <div class="pos-cart-footer">
+                        <div class="form-group">
+                            <label class="form-label">Giảm giá</label>
+                            <div class="flex gap-8">
+                                <select id="pos-discount-type" class="form-control" style="width: 110px;">
+                                    <option value="">Không</option>
+                                    <option value="PERCENT">Theo %</option>
+                                    <option value="AMOUNT">Số tiền</option>
+                                </select>
+                                <input type="number" id="pos-discount-value" class="form-control" min="0" value="0" placeholder="0">
+                            </div>
+                        </div>
+
+                        <div class="pos-summary-row">
+                            <span>Tạm tính</span>
+                            <span id="pos-subtotal">0 ₫</span>
+                        </div>
+                        <div class="pos-summary-row">
+                            <span>Giảm giá</span>
+                            <span id="pos-discount-amount">0 ₫</span>
+                        </div>
+                        <div class="pos-summary-row pos-total-row">
+                            <span>Tổng cộng</span>
+                            <span id="pos-total">0 ₫</span>
+                        </div>
+
+                        <button class="btn btn-primary pos-checkout-btn" id="open-checkout-btn">Thanh toán</button>
+                    </div>
+                </aside>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: Thanh toán ===== -->
+    <div class="modal-overlay hidden" id="checkout-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Thanh toán</h3>
+                <button class="modal-close-btn" onclick="closeModal('checkout-modal')">✕</button>
+            </div>
+            <form id="checkout-form">
+                <div class="modal-body">
+                    <div class="pos-summary-row pos-total-row mb-16">
+                        <span>Tổng cần thanh toán</span>
+                        <span id="checkout-total-amount">0 ₫</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Phương thức thanh toán *</label>
+                        <select id="checkout-payment-method" class="form-control" required>
+                            <option value="CASH">Tiền mặt</option>
+                            <option value="CARD">Thẻ</option>
+                            <option value="TRANSFER">Chuyển khoản</option>
+                            <option value="MOMO">Ví MoMo</option>
+                            <option value="VNPAY">VNPay</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="checkout-cash-group">
+                        <label class="form-label">Khách đưa (₫)</label>
+                        <input type="number" id="checkout-amount-paid" class="form-control" min="0" step="1000">
+                    </div>
+
+                    <div class="pos-summary-row" id="checkout-change-row" style="display:none;">
+                        <span>Tiền thối lại</span>
+                        <span id="checkout-change-amount">0 ₫</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('checkout-modal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary" id="checkout-submit-btn">Xác nhận thanh toán</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Thứ tự nhúng JS: api.js -> common.js -> pos.js -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/common.js"></script>
+    <script src="../assets/js/pos.js"></script>
+</body>
+</html>

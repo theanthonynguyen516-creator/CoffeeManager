@@ -1,0 +1,144 @@
+<!--
+    FILE: pages/orders.html
+    -----------------------------------------------------------------------
+    1. File này dùng để làm gì?
+       Trang quản lý đơn hàng: danh sách, tìm kiếm theo mã đơn, lọc theo
+       ngày/trạng thái, xem chi tiết, hủy đơn, in hóa đơn.
+    2. File này giao tiếp với file nào?
+       ../assets/css/common.css, orders.css, responsive.css
+       ../assets/js/api.js, common.js, orders.js
+    3. File này gọi API nào? (thông qua orders.js)
+       backend/api/orders/list.php, detail.php, cancel.php
+    4. Dữ liệu đi theo hướng nào?
+       Trang load -> orders.js gọi list.php -> render bảng
+       Xem chi tiết -> gọi detail.php -> render modal
+       Hủy đơn -> gọi cancel.php -> SQL Server -> JSON -> load lại bảng
+    -----------------------------------------------------------------------
+-->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn hàng - CoffeeManager</title>
+    <link rel="stylesheet" href="../assets/css/common.css">
+    <link rel="stylesheet" href="../assets/css/orders.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar" id="app-sidebar">
+            <div class="sidebar-logo">
+                <span class="icon">☕</span>
+                <span class="logo-text">CoffeeManager</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="../index.html"><span class="menu-icon">📊</span><span>Dashboard</span></a></li>
+                <li><a href="pos.html"><span class="menu-icon">🛒</span><span>Bán hàng (POS)</span></a></li>
+                <li><a href="products.html"><span class="menu-icon">☕</span><span>Sản phẩm</span></a></li>
+                <li><a href="categories.html"><span class="menu-icon">🏷️</span><span>Danh mục</span></a></li>
+                <li><a href="tables.html"><span class="menu-icon">🍽️</span><span>Bàn</span></a></li>
+                <li><a href="orders.html" class="active"><span class="menu-icon">🧾</span><span>Đơn hàng</span></a></li>
+                <li><a href="customers.html"><span class="menu-icon">👥</span><span>Khách hàng</span></a></li>
+                <li><a href="employees.html"><span class="menu-icon">🧑‍💼</span><span>Nhân viên</span></a></li>
+                <li><a href="inventory.html"><span class="menu-icon">📦</span><span>Kho</span></a></li>
+                <li><a href="suppliers.html"><span class="menu-icon">🚚</span><span>Nhà cung cấp</span></a></li>
+                <li><a href="reports.html"><span class="menu-icon">📈</span><span>Báo cáo</span></a></li>
+                <li><a href="settings.html"><span class="menu-icon">⚙️</span><span>Cài đặt</span></a></li>
+            </ul>
+        </aside>
+
+        <div class="main-content">
+            <!-- ===== HEADER ===== -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="header-toggle-btn" id="sidebar-toggle-btn">☰</button>
+                    <h1 class="header-title">Quản lý đơn hàng</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-user">
+                        <div class="avatar" id="current-user-avatar">A</div>
+                        <div>
+                            <div class="user-name" id="current-user-name">...</div>
+                            <div class="user-role" id="current-user-role">...</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn">Đăng xuất</button>
+                </div>
+            </header>
+
+            <main class="page-body">
+
+                <!-- Thanh lọc -->
+                <div class="orders-filter-bar mb-16">
+                    <div class="search-box">
+                        <span class="icon">🔍</span>
+                        <input type="text" id="search-input" class="form-control" placeholder="Tìm theo mã đơn...">
+                    </div>
+                    <input type="date" id="from-date-input" class="form-control">
+                    <span class="text-muted">đến</span>
+                    <input type="date" id="to-date-input" class="form-control">
+                    <select id="status-filter" class="form-control">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="PAID">Đã thanh toán</option>
+                        <option value="PENDING">Đang xử lý</option>
+                        <option value="CANCELLED">Đã hủy</option>
+                    </select>
+                    <button class="btn btn-secondary" id="reset-filter-btn">Đặt lại</button>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Bàn</th>
+                                <th>Nhân viên</th>
+                                <th>Khách hàng</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                                <th>Thời gian</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-tbody">
+                            <tr><td colspan="8" class="table-empty">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="pagination-container"></div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: Chi tiết đơn hàng / Hóa đơn ===== -->
+    <div class="modal-overlay hidden" id="order-detail-modal">
+        <div class="modal-box modal-lg">
+            <div class="modal-header">
+                <h3>Chi tiết đơn hàng</h3>
+                <button class="modal-close-btn" onclick="closeModal('order-detail-modal')">✕</button>
+            </div>
+            <div class="modal-body" id="order-detail-content">
+                <p class="table-empty">Đang tải...</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="printCurrentInvoice()">🖨️ In hóa đơn</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('order-detail-modal')">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vùng hóa đơn dùng riêng để in (ẩn khỏi giao diện thường, chỉ hiện khi in) -->
+    <div id="invoice-print-area" class="invoice-print-area"></div>
+
+    <!-- Thứ tự nhúng JS: api.js -> common.js -> orders.js -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/common.js"></script>
+    <script src="../assets/js/orders.js"></script>
+</body>
+</html>

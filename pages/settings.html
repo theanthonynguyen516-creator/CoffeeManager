@@ -1,0 +1,157 @@
+<!--
+    FILE: pages/settings.html
+    -----------------------------------------------------------------------
+    1. File này dùng để làm gì?
+       Trang cài đặt: Thông tin quán (chỉ Admin sửa), Tài khoản cá nhân,
+       Đổi mật khẩu (mọi người dùng đều sửa được của chính mình).
+    2. File này giao tiếp với file nào?
+       ../assets/css/common.css, settings.css, responsive.css
+       ../assets/js/api.js, common.js, settings.js
+    3. File này gọi API nào? (thông qua settings.js)
+       backend/api/settings/get.php, update.php
+       backend/api/auth/me.php, update-profile.php, change-password.php
+    4. Dữ liệu đi theo hướng nào?
+       Trang load -> settings.js gọi settings/get.php + auth/me.php -> đổ vào form
+       Lưu từng form -> gọi API tương ứng -> SQL Server -> JSON -> thông báo
+    -----------------------------------------------------------------------
+-->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cài đặt - CoffeeManager</title>
+    <link rel="stylesheet" href="../assets/css/common.css">
+    <link rel="stylesheet" href="../assets/css/settings.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar" id="app-sidebar">
+            <div class="sidebar-logo">
+                <span class="icon">☕</span>
+                <span class="logo-text">CoffeeManager</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="../index.html"><span class="menu-icon">📊</span><span>Dashboard</span></a></li>
+                <li><a href="pos.html"><span class="menu-icon">🛒</span><span>Bán hàng (POS)</span></a></li>
+                <li><a href="products.html"><span class="menu-icon">☕</span><span>Sản phẩm</span></a></li>
+                <li><a href="categories.html"><span class="menu-icon">🏷️</span><span>Danh mục</span></a></li>
+                <li><a href="tables.html"><span class="menu-icon">🍽️</span><span>Bàn</span></a></li>
+                <li><a href="orders.html"><span class="menu-icon">🧾</span><span>Đơn hàng</span></a></li>
+                <li><a href="customers.html"><span class="menu-icon">👥</span><span>Khách hàng</span></a></li>
+                <li><a href="employees.html"><span class="menu-icon">🧑‍💼</span><span>Nhân viên</span></a></li>
+                <li><a href="inventory.html"><span class="menu-icon">📦</span><span>Kho</span></a></li>
+                <li><a href="suppliers.html"><span class="menu-icon">🚚</span><span>Nhà cung cấp</span></a></li>
+                <li><a href="reports.html"><span class="menu-icon">📈</span><span>Báo cáo</span></a></li>
+                <li><a href="settings.html" class="active"><span class="menu-icon">⚙️</span><span>Cài đặt</span></a></li>
+            </ul>
+        </aside>
+
+        <div class="main-content">
+            <!-- ===== HEADER ===== -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="header-toggle-btn" id="sidebar-toggle-btn">☰</button>
+                    <h1 class="header-title">Cài đặt</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-user">
+                        <div class="avatar" id="current-user-avatar">A</div>
+                        <div>
+                            <div class="user-name" id="current-user-name">...</div>
+                            <div class="user-role" id="current-user-role">...</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn">Đăng xuất</button>
+                </div>
+            </header>
+
+            <main class="page-body">
+
+                <div class="settings-columns">
+
+                    <!-- ===== Thông tin quán (chỉ Admin sửa được) ===== -->
+                    <div class="card">
+                        <h3 class="settings-section-title">🏪 Thông tin quán</h3>
+                        <p class="text-muted mb-16" id="shop-info-hint"></p>
+                        <form id="shop-info-form">
+                            <div class="form-group">
+                                <label class="form-label">Tên quán</label>
+                                <input type="text" id="shop-name" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Địa chỉ</label>
+                                <input type="text" id="shop-address" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Số điện thoại</label>
+                                <input type="text" id="shop-phone" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Link Logo</label>
+                                <input type="text" id="shop-logo" class="form-control" placeholder="https://...">
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="shop-info-submit-btn">Lưu thông tin quán</button>
+                        </form>
+                    </div>
+
+                    <!-- ===== Tài khoản cá nhân ===== -->
+                    <div class="card">
+                        <h3 class="settings-section-title">👤 Tài khoản cá nhân</h3>
+                        <form id="profile-form">
+                            <div class="form-group">
+                                <label class="form-label">Tên đăng nhập</label>
+                                <input type="text" id="profile-username" class="form-control" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Họ tên *</label>
+                                <input type="text" id="profile-fullname" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" id="profile-email" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Số điện thoại</label>
+                                <input type="text" id="profile-phone" class="form-control">
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="profile-submit-btn">Lưu thông tin cá nhân</button>
+                        </form>
+                    </div>
+
+                    <!-- ===== Đổi mật khẩu ===== -->
+                    <div class="card">
+                        <h3 class="settings-section-title">🔒 Đổi mật khẩu</h3>
+                        <form id="password-form">
+                            <div class="form-group">
+                                <label class="form-label">Mật khẩu hiện tại *</label>
+                                <input type="password" id="current-password" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Mật khẩu mới *</label>
+                                <input type="password" id="new-password" class="form-control" placeholder="Tối thiểu 6 ký tự" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nhập lại mật khẩu mới *</label>
+                                <input type="password" id="confirm-password" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="password-submit-btn">Đổi mật khẩu</button>
+                        </form>
+                    </div>
+
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Thứ tự nhúng JS: api.js -> common.js -> settings.js -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/common.js"></script>
+    <script src="../assets/js/settings.js"></script>
+</body>
+</html>

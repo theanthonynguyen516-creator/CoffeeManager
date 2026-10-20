@@ -1,0 +1,201 @@
+<!--
+    FILE: pages/employees.html
+    -----------------------------------------------------------------------
+    1. File này dùng để làm gì?
+       Trang quản lý nhân viên: danh sách, thêm, sửa, xóa, khóa/mở tài
+       khoản, phân quyền theo vai trò (Admin/Manager/Cashier/Staff).
+    2. File này giao tiếp với file nào?
+       ../assets/css/common.css, employees.css, responsive.css
+       ../assets/js/api.js, common.js, employees.js
+    3. File này gọi API nào? (thông qua employees.js)
+       backend/api/employees/list.php, roles.php, create.php, update.php, delete.php
+    4. Dữ liệu đi theo hướng nào?
+       Trang load -> employees.js gọi list.php + roles.php -> render bảng
+       Thêm/sửa/xóa/khóa -> gọi API tương ứng -> SQL Server -> JSON -> load lại
+    -----------------------------------------------------------------------
+-->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhân viên - CoffeeManager</title>
+    <link rel="stylesheet" href="../assets/css/common.css">
+    <link rel="stylesheet" href="../assets/css/employees.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar" id="app-sidebar">
+            <div class="sidebar-logo">
+                <span class="icon">☕</span>
+                <span class="logo-text">CoffeeManager</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="../index.html"><span class="menu-icon">📊</span><span>Dashboard</span></a></li>
+                <li><a href="pos.html"><span class="menu-icon">🛒</span><span>Bán hàng (POS)</span></a></li>
+                <li><a href="products.html"><span class="menu-icon">☕</span><span>Sản phẩm</span></a></li>
+                <li><a href="categories.html"><span class="menu-icon">🏷️</span><span>Danh mục</span></a></li>
+                <li><a href="tables.html"><span class="menu-icon">🍽️</span><span>Bàn</span></a></li>
+                <li><a href="orders.html"><span class="menu-icon">🧾</span><span>Đơn hàng</span></a></li>
+                <li><a href="customers.html"><span class="menu-icon">👥</span><span>Khách hàng</span></a></li>
+                <li><a href="employees.html" class="active"><span class="menu-icon">🧑‍💼</span><span>Nhân viên</span></a></li>
+                <li><a href="inventory.html"><span class="menu-icon">📦</span><span>Kho</span></a></li>
+                <li><a href="suppliers.html"><span class="menu-icon">🚚</span><span>Nhà cung cấp</span></a></li>
+                <li><a href="reports.html"><span class="menu-icon">📈</span><span>Báo cáo</span></a></li>
+                <li><a href="settings.html"><span class="menu-icon">⚙️</span><span>Cài đặt</span></a></li>
+            </ul>
+        </aside>
+
+        <div class="main-content">
+            <!-- ===== HEADER ===== -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="header-toggle-btn" id="sidebar-toggle-btn">☰</button>
+                    <h1 class="header-title">Quản lý nhân viên</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-user">
+                        <div class="avatar" id="current-user-avatar">A</div>
+                        <div>
+                            <div class="user-name" id="current-user-name">...</div>
+                            <div class="user-role" id="current-user-role">...</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn">Đăng xuất</button>
+                </div>
+            </header>
+
+            <main class="page-body">
+
+                <div class="toolbar">
+                    <div class="flex gap-12" style="flex-wrap: wrap;">
+                        <div class="search-box">
+                            <span class="icon">🔍</span>
+                            <input type="text" id="search-input" class="form-control" placeholder="Tìm theo tên hoặc tài khoản...">
+                        </div>
+                        <select id="role-filter" class="form-control" style="width: 180px;">
+                            <option value="">Tất cả vai trò</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="add-employee-btn">+ Thêm nhân viên</button>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Họ tên</th>
+                                <th>Tài khoản</th>
+                                <th>Vai trò</th>
+                                <th>Chức danh</th>
+                                <th>SĐT</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employees-tbody">
+                            <tr><td colspan="7" class="table-empty">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="pagination-container"></div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: Thêm / Sửa nhân viên ===== -->
+    <div class="modal-overlay hidden" id="employee-modal">
+        <div class="modal-box modal-lg">
+            <div class="modal-header">
+                <h3 id="employee-modal-title">Thêm nhân viên</h3>
+                <button class="modal-close-btn" onclick="closeModal('employee-modal')">✕</button>
+            </div>
+            <form id="employee-form">
+                <div class="modal-body">
+                    <input type="hidden" id="employee-id">
+                    <input type="hidden" id="employee-user-id">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Họ tên *</label>
+                            <input type="text" id="employee-fullname" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Vai trò *</label>
+                            <select id="employee-role" class="form-control" required></select>
+                        </div>
+                    </div>
+
+                    <!-- Chỉ hiển thị khi THÊM MỚI, vì tài khoản đã có username/password thì không đổi ở đây -->
+                    <div class="form-row" id="employee-account-fields">
+                        <div class="form-group">
+                            <label class="form-label">Tên đăng nhập *</label>
+                            <input type="text" id="employee-username" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mật khẩu *</label>
+                            <input type="password" id="employee-password" class="form-control" placeholder="Tối thiểu 6 ký tự">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Số điện thoại</label>
+                            <input type="text" id="employee-phone" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" id="employee-email" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Chức danh</label>
+                            <input type="text" id="employee-position" class="form-control" placeholder="vd: Pha chế, Thu ngân">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Lương (₫)</label>
+                            <input type="number" id="employee-salary" class="form-control" min="0" step="100000">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Ngày vào làm</label>
+                            <input type="date" id="employee-hiredate" class="form-control">
+                        </div>
+                        <div class="form-group" id="employee-status-group" style="display:none;">
+                            <label class="form-label">Trạng thái tài khoản</label>
+                            <select id="employee-status" class="form-control">
+                                <option value="1">Đang hoạt động</option>
+                                <option value="0">Đã khóa</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Địa chỉ</label>
+                        <input type="text" id="employee-address" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('employee-modal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary" id="employee-submit-btn">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Thứ tự nhúng JS: api.js -> common.js -> employees.js -->
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/common.js"></script>
+    <script src="../assets/js/employees.js"></script>
+</body>
+</html>
